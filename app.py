@@ -6,5 +6,9 @@ app = Flask(__name__)
 def home():
     return "LINE Bot Running!"
 
+@app.route("/callback")
+def callback():
+    return "OK"
+
 if __name__ == "__main__":
     app.run()
