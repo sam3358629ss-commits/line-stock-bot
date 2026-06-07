@@ -1,68 +1,79 @@
 import streamlit as st
+import yfinance as yf
+import pandas as pd
 
-st.set_page_config(
-    page_title="主升段雷達",
-    page_icon="📈",
-    layout="wide"
-)
+st.set_page_config(page_title="主升段雷達", layout="wide")
 
 st.title("📈 主升段雷達")
 
-stocks = {
-    "2330": "台積電",
-    "2317": "鴻海",
-    "2454": "聯發科",
-    "3450": "聯鈞",
-    "3583": "辛耘"
-}
-
-stock = st.text_input("輸入股票代號")
+stock = st.text_input("輸入台股代號", "2330")
 
 if stock:
 
-    name = stocks.get(stock, "未知股票")
+    ticker = stock + ".TW"
 
-    current_price = 100
-    tech_score = 85
-    chip_score = 80
+    try:
+        df = yf.download(
+            ticker,
+            period="6mo",
+            progress=False,
+            auto_adjust=True
+        )
 
-    stop_loss = round(current_price * 0.95, 2)
-    target_price = round(current_price * 1.15, 2)
+        if len(df) < 60:
+            st.error("資料不足")
+            st.stop()
 
-    st.subheader(f"{name} ({stock})")
+        close = float(df["Close"].iloc[-1])
 
-    col1, col2 = st.columns(2)
+        ma20 = float(df["Close"].rolling(20).mean().iloc[-1])
+        ma60 = float(df["Close"].rolling(60).mean().iloc[-1])
 
-    with col1:
-        st.metric("技術面評分", f"{tech_score}分")
+        avg_volume = df["Volume"].rolling(20).mean().iloc[-1]
+        current_volume = df["Volume"].iloc[-1]
 
-    with col2:
-        st.metric("籌碼面評分", f"{chip_score}分")
+        score = 0
 
-    st.success("✓ 站上月線")
-    st.success("✓ 量能增加")
-    st.success("✓ 布林帶收縮")
-    st.success("✓ 子母K型態")
+        if close > ma20:
+            score += 25
 
-    st.divider()
+        if close > ma60:
+            score += 25
 
-    st.metric("進場價", current_price)
-    st.metric("停損價", stop_loss)
-    st.metric("目標價", target_price)
+        if current_volume > avg_volume:
+            score += 25
 
-st.divider()
+        if ma20 > ma60:
+            score += 25
 
-st.header("🔥 近期推薦五檔")
+        stop_loss = round(ma20, 2)
+        target_price = round(close * 1.15, 2)
 
-recommend_list = [
-    {"name": "台積電", "score": 92},
-    {"name": "聯發科", "score": 89},
-    {"name": "聯鈞", "score": 87},
-    {"name": "辛耘", "score": 86},
-    {"name": "鴻海", "score": 84},
-]
+        st.subheader(f"{stock}")
 
-for idx, stock in enumerate(recommend_list, start=1):
-    st.write(
-        f"{idx}. {stock['name']}｜主升段評分：{stock['score']}分"
-    )
+        c1, c2, c3 = st.columns(3)
+
+        c1.metric("目前股價", round(close, 2))
+        c2.metric("主升段評分", score)
+        c3.metric("目標價", target_price)
+
+        st.metric("停損價", stop_loss)
+
+        st.write("---")
+
+        if close > ma20:
+            st.success("✓ 站上20MA")
+
+        if close > ma60:
+            st.success("✓ 站上60MA")
+
+        if current_volume > avg_volume:
+            st.success("✓ 量能高於20日均量")
+
+        if ma20 > ma60:
+            st.success("✓ 均線多頭排列")
+
+        st.line_chart(df["Close"])
+
+    except Exception as e:
+        st.error(str(e))
