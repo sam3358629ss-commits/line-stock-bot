@@ -1,33 +1,10 @@
-import os
-from flask import Flask, request
-from linebot import LineBotApi
-from linebot.models import TextSendMessage
+import streamlit as st
 
-app = Flask(__name__)
+st.title("主升段雷達")
 
-line_bot_api = LineBotApi(
-    os.getenv("CHANNEL_ACCESS_TOKEN")
-)
+stock = st.text_input("輸入股票代號")
 
-@app.route("/")
-def home():
-    return "LINE Bot Running!"
-
-@app.route("/callback", methods=["POST"])
-def callback():
-    body = request.get_json()
-
-    for event in body["events"]:
-        if event["type"] == "message":
-            if event["message"]["type"] == "text":
-
-                user_text = event["message"]["text"]
-
-                line_bot_api.reply_message(
-                    event["replyToken"],
-                    TextSendMessage(
-                        text=f"收到股票代號：{user_text}"
-                    )
-                )
-
-    return "OK"
+if stock:
+    st.write(f"股票代號：{stock}")
+    st.write("技術面：80分")
+    st.write("籌碼面：75分")
