@@ -1,3 +1,6 @@
+import streamlit as st
+
+FINMIND_TOKEN = st.secrets["FINMIND_TOKEN"]
 import pandas as pd
 import streamlit as st
 import yfinance as yf
