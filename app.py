@@ -1,4 +1,3 @@
-import os
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -11,8 +10,10 @@ def home():
 def callback():
     body = request.get_json()
 
-    print("收到訊息：")
-    print(body)
+    event = body["events"][0]
+
+    if event["type"] == "message":
+        print("收到訊息")
 
     return "OK"
 
