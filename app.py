@@ -61,7 +61,7 @@ with st.spinner("掃描股票池中..."):
                 auto_adjust=True
             )
 
-            if df.empty or len(df) < 60:
+            if df.空的 or len(df) < 60:
                 continue
 
             if isinstance(df.columns, pd.MultiIndex):
@@ -139,20 +139,30 @@ stock = st.text_input("輸入台股代號", "2330")
 
 if stock:
 
-    ticker = stock + ".TW"
+    df = None
+
+    # 先找上市，再找上櫃
+    for suffix in [".TW", ".TWO"]:
+        try:
+            test_df = yf.download(
+                stock + suffix,
+                period="6mo",
+                progress=False,
+                auto_adjust=True
+            )
+
+            if not test_df.empty and len(test_df) >= 60:
+                df = test_df
+                break
+
+        except:
+            pass
+
+    if df is None:
+        st.error("找不到股票代號或資料不足")
+        st.stop()
 
     try:
-
-        df = yf.download(
-            ticker,
-            period="6mo",
-            progress=False,
-            auto_adjust=True
-        )
-
-        if df.empty or len(df) < 60:
-            st.error("資料不足或找不到該股票代號")
-            st.stop()
 
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
