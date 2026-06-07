@@ -2,5 +2,6 @@ streamlit
 pandas
 numpy
 requests
-finmind
 ta
+FinMind
+tqdm
