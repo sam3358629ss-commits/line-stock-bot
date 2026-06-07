@@ -1,6 +1,13 @@
+import os
 from flask import Flask, request
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
 
 app = Flask(__name__)
+
+line_bot_api = LineBotApi(
+    os.getenv("CHANNEL_ACCESS_TOKEN")
+)
 
 @app.route("/")
 def home():
@@ -10,12 +17,17 @@ def home():
 def callback():
     body = request.get_json()
 
-    event = body["events"][0]
+    for event in body["events"]:
+        if event["type"] == "message":
+            if event["message"]["type"] == "text":
 
-    if event["type"] == "message":
-        print("收到訊息")
+                user_text = event["message"]["text"]
+
+                line_bot_api.reply_message(
+                    event["replyToken"],
+                    TextSendMessage(
+                        text=f"收到股票代號：{user_text}"
+                    )
+                )
 
     return "OK"
-
-if __name__ == "__main__":
-    app.run()
